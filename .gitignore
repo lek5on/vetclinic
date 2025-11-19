@@ -1,0 +1,21 @@
+# Ignore everything by default
+/*
+
+# Keep this gitignore file
+!.gitignore
+
+# Keep the public folder and all its contents
+!/public/
+!/public/**
+
+# Keep the main server file
+!/server.js
+
+# Explicitly ignore backup directory (for clarity)
+/backup/
+
+# Common ignores (optional, kept commented — adjust if needed)
+# node_modules/
+# .env
+# .DS_Store
+# npm-debug.log

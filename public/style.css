@@ -1,0 +1,123 @@
+body { font-family: Arial, sans-serif; margin: 20px; }
+form { margin-bottom: 20px; }
+input { margin: 5px; padding: 5px; }
+button { padding: 5px 10px; }
+ul { list-style: none; padding: 0; }
+li { padding: 10px; border-bottom: 1px solid #ccc; }
+
+/* Стили для попап-окна */
+.popup {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;  
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  overflow-y: auto;
+  z-index: 1000;
+  justify-content: center;
+  align-items: flex-start;
+  padding-top: 20px;
+  padding-bottom: 20px;
+}
+.popup-content {
+  background: white;
+  padding: 20px;
+  border-radius: 5px;
+  width: 90%;
+  max-width: 500px;
+  max-height: 85vh;
+  margin: 20px auto;
+  overflow-y: auto;
+  box-sizing: border-box;
+  position: relative;
+}
+.popup-content input {
+  display: block;
+  width: 100%;
+  margin: 10px 0;
+  box-sizing: border-box;
+}
+.popup-content label {
+  display: block;
+  margin-top: 15px;
+  margin-bottom: 5px;
+  font-weight: bold;
+}
+.popup-content label:first-of-type {
+  margin-top: 0;
+}
+.popup-content select {
+  display: block;
+  width: 100%;
+  margin: 5px 0 10px 0;
+  padding: 5px;
+  box-sizing: border-box;
+}
+.popup-content textarea {
+  display: block;
+  width: 100%;
+  margin: 5px 0 10px 0;
+  padding: 5px;
+  box-sizing: border-box;
+  min-height: 80px;
+  resize: vertical;
+}
+.popup-content button {
+  margin: 10px 5px 0 0;
+}
+
+
+
+#visitList {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 20px;
+}
+#visitList th, #visitList td {
+  border: 1px solid #ccc;
+  padding: 8px;
+  text-align: left;
+}
+#visitList th {
+  background-color: #f2f2f2;
+}
+#diseaseList {
+  list-style: none;
+  padding: 0;
+}
+#diseaseList li {
+  margin: 10px 0;
+}
+#diseaseList button {
+  margin-left: 10px;
+}
+
+/* Сдвигаем кнопки действий у услуг немного правее */
+#serviceList li button,
+.service-action {
+  margin-left: 12px;
+  vertical-align: middle;
+}
+
+/* Список чекбоксов для выбора услуг */
+.checkbox-list {
+  display: block;
+  margin: 5px 0 10px 0;
+  max-height: 160px;
+  overflow-y: auto;
+  padding: 8px;
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
+  background: #fafafa;
+}
+.checkbox-list label {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+  cursor: pointer;
+  padding: 4px 2px;
+}
+.checkbox-list input[type="checkbox"] { margin-left: 8px; }

@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>Запись на приём</title>
+  <link rel="stylesheet" href="client.css">
+</head>
+<body>
+    <div>
+  <h1 style="margin-right: 100px;margin-bottom: 50px;">Запись на приём в ветеринарную клинику</h1>
+  <img class="header-image"src="image1.jpeg" alt="">
+    </div>
+  <form id="appointmentForm">
+    <h2>Данные животного</h2>
+    <input type="text" id="animalName" placeholder="Имя животного" required>
+    <input type="text" id="species" placeholder="Вид (например, Кот, Собака)" required>
+    <input type="text" id="breed" placeholder="Порода">
+    <input type="number" id="age" placeholder="Возраст">
+
+    <h2>Данные владельца</h2>
+    <input type="text" id="ownerName" placeholder="ФИО владельца" required>
+    <input type="tel" id="phone" placeholder="Телефон" required>
+    <input type="text" id="ownerAddress" placeholder="Адрес владельца">
+    <input type="email" id="ownerEmail" placeholder="Email владельца">
+
+    <h2>Дата и время приёма</h2>
+    <input type="datetime-local" id="appointmentDate" required>
+
+    <button type="submit">Записаться</button>
+  </form>
+
+  <div id="confirmation" style="display: none; margin-top: 20px;"></div>
+
+  <script src="client.js"></script>
+</body>
+</html>

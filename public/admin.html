@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Ветеринарная лечебница</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <h1>Управление животными</h1>
+
+    <form id="animalForm">
+        <input type="text" id="name" placeholder="Имя" required>
+        <input type="text" id="species" placeholder="Вид" required>
+        <input type="text" id="breed" placeholder="Порода">
+        <input type="number" id="age" placeholder="Возраст">
+
+        <div>
+            <label>
+                <input type="radio" name="ownerOption" value="existing" checked onclick="toggleOwnerFields()">
+                Выбрать существующего хозяина
+            </label>
+            <label>
+                <input type="radio" name="ownerOption" value="new" onclick="toggleOwnerFields()">
+                Добавить нового хозяина
+            </label>
+        </div>
+
+        <div id="existingOwnerField">
+            <select id="ownerId" name="ownerId">
+                <option value="">Без хозяина</option>
+            </select>
+            <button type="button" onclick="loadOwners()">Обновить список хозяев</button>
+        </div>
+
+        <div id="newOwnerFields" style="display: none;">
+            <input type="text" id="newOwnerName" placeholder="Имя хозяина">
+            <input type="text" id="newOwnerPhone" placeholder="Телефон">
+            <input type="text" id="newOwnerAddress" placeholder="Адрес">
+            <input type="email" id="newOwnerEmail" placeholder="Email">
+        </div>
+
+        <button type="submit">Добавить</button>
+    </form>
+
+    <input type="text" id="searchSpecies" placeholder="Поиск по виду">
+    <button onclick="searchAnimals()">Найти</button>
+    <button onclick="loadAnimals()">Показать все</button>
+
+    <ul id="animalList"></ul>
+
+    <div id="editPopup" class="popup">
+        <div class="popup-content">
+            <h2>Редактировать животное</h2>
+            <form id="editForm">
+                <input type="text" id="editName" placeholder="Имя" required>
+                <input type="text" id="editSpecies" placeholder="Вид" required>
+                <input type="text" id="editBreed" placeholder="Порода">
+                <input type="number" id="editAge" placeholder="Возраст">
+
+                <h3>Информация о хозяине</h3>
+                <input type="text" id="editOwnerName" placeholder="Имя хозяина">
+                <input type="text" id="editOwnerPhone" placeholder="Телефон">
+                <input type="text" id="editOwnerAddress" placeholder="Адрес">
+                <input type="email" id="editOwnerEmail" placeholder="Email">
+
+                <button type="submit">Сохранить</button>
+                <button type="button" onclick="closePopup()">Отмена</button>
+            </form>
+        </div>
+    </div>
+
+<div id="medicalPopup" class="popup">
+    <div class="popup-content">
+        <h2 id="medicalPopupTitle">Медицинская карточка</h2>
+        <ul id="medicalHistoryList"></ul>
+
+        <h3 id="medicalFormTitle">Добавить запись</h3>
+        <form id="medicalForm">
+            <label>
+                <input type="radio" name="diseaseOption" value="existing" checked onclick="toggleDiseaseFields()">
+                Выбрать существующую болезнь
+            </label>
+            <label>
+                <input type="radio" name="diseaseOption" value="new" onclick="toggleDiseaseFields()">
+                Добавить новую болезнь
+            </label>
+
+            <div id="existingDiseaseField" style="margin-top: 20px; margin-bottom: 20px;">
+                <select id="diseaseId" name="diseaseId">
+                    <option value="">Выберите болезнь</option>
+                </select>
+            </div>
+
+            <div id="newDiseaseFields" style="display: none;">
+                <input type="text" id="diseaseName" name="diseaseName" placeholder="Название болезни">
+                <textarea id="symptoms" name="symptoms" placeholder="Симптомы"></textarea>
+                <textarea id="treatment" name="treatment" placeholder="Лечение"></textarea>
+            </div>
+
+            <button type="submit" id="medicalFormSubmit">Добавить запись</button>
+            <button type="button" onclick="closeMedicalPopup()">Закрыть</button>
+        </form>
+    </div>
+</div>
+
+    <h2>Управление болезнями</h2>
+    <button onclick="loadDiseases()">Обновить список болезней</button>
+    <ul id="diseaseList"></ul>
+    <h3>Добавить новую болезнь</h3>
+    <form id="diseaseForm">
+        <input type="text" id="diseaseNameInput" placeholder="Название болезни" required>
+        <input type="text" id="diseaseDescription" placeholder="Описание" required>
+        <input type="text" id="diseaseTreatment" placeholder="Лечение" required>
+        <button type="submit">Добавить болезнь</button>
+    </form>
+
+    <div id="editDiseasePopup" class="popup">
+        <div class="popup-content">
+            <h2>Редактировать болезнь</h2>
+            <form id="editDiseaseForm">
+                <input type="text" id="editDiseaseName" placeholder="Название болезни" required>
+                <textarea id="editDiseaseDescription" placeholder="Описание"></textarea>
+                <textarea id="editDiseaseTreatment" placeholder="Лечение"></textarea>
+                <button type="submit">Сохранить</button>
+                <button type="button" onclick="closeEditDiseasePopup()">Закрыть</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- НОВЫЙ РАЗДЕЛ: Управление услугами -->
+    <h2>Управление услугами</h2>
+    <button onclick="loadServices()">Обновить список услуг</button>
+    <ul id="serviceList"></ul>
+    <h3>Добавить новую услугу</h3>
+    <form id="serviceForm">
+        <input type="text" id="serviceName" placeholder="Название услуги" required>
+        <input type="text" id="serviceDescription" placeholder="Описание">
+        <input type="number" id="servicePrice" placeholder="Цена" step="0.01" required>
+        <input type="text" id="serviceCategory" placeholder="Категория">
+        <button type="submit">Добавить услугу</button>
+    </form>
+
+    <div id="editServicePopup" class="popup">
+        <div class="popup-content">
+            <h2>Редактировать услугу</h2>
+            <form id="editServiceForm">
+                <input type="text" id="editServiceName" placeholder="Название услуги" required>
+                <textarea id="editServiceDescription" placeholder="Описание"></textarea>
+                <input type="number" id="editServicePrice" placeholder="Цена" step="0.01" required>
+                <input type="text" id="editServiceCategory" placeholder="Категория">
+                <button type="submit">Сохранить</button>
+                <button type="button" onclick="closeEditServicePopup()">Закрыть</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- НОВЫЙ РАЗДЕЛ: Формирование отчётов -->
+    <h2>Формирование отчёта активности</h2>
+    <form id="reportForm">
+        <label>Начало периода:</label>
+        <input type="date" id="reportStart" required>
+        <label>Конец периода:</label>
+        <input type="date" id="reportEnd" required>
+        <button type="submit">Сформировать отчёт</button>
+    </form>
+    <div id="reportResult"></div>
+
+    <h2>Список созданных отчётов</h2>
+    <button onclick="loadReports()">Обновить список</button>
+    <div id="reportsList"></div>
+
+    <h2>Журнал посещений</h2>
+    <button onclick="loadVisits()">Обновить журнал</button>
+    <button onclick="openAddVisitPopup()">Добавить визит</button>
+    <table id="visitList">
+        <thead>
+            <tr>
+                <th>Дата</th>
+                <th>Животное</th>
+                <th>Хозяин</th>
+                <th>Болезнь</th>
+                <th>Услуги</th> <!-- Новое поле -->
+                <th>Стоимость</th> <!-- Новое поле -->
+                <th>Заметки</th>
+                <th>Статус</th>
+                <th>Действия</th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+
+    <div id="addVisitPopup" class="popup">
+        <div class="popup-content">
+            <h2>Добавить визит</h2>
+            <form id="addVisitForm">
+                <label>Дата и время:</label>
+                <input type="datetime-local" id="addVisitDate" required>
+                <label>Животное:</label>
+                <select id="addVisitAnimal" required>
+                    <option value="">Выберите животное</option>
+                </select>
+                <label>Хозяин:</label>
+                <select id="addVisitOwner" required>
+                    <option value="">Выберите хозяина</option>
+                </select>
+                <label>Болезнь (опционально):</label>
+                <select id="addVisitDisease">
+                    <option value="">Не указано</option>
+                </select>
+                <label>Услуги:</label>
+                <div id="addVisitServices" class="checkbox-list"></div>
+                <label>Заметки:</label>
+                <textarea id="addVisitNotes" placeholder="Заметки"></textarea>
+                <label>Статус:</label>
+                <select id="addVisitStatus" required>
+                    <option value="planned">Запланирован</option>
+                    <option value="completed">Завершён</option>
+                    <option value="cancelled">Отменён</option>
+                </select>
+                <button type="submit">Добавить</button>
+                <button type="button" onclick="closeAddVisitPopup()">Отмена</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="editVisitPopup" class="popup">
+        <div class="popup-content">
+            <h2>Редактировать визит</h2>
+            <form id="editVisitForm">
+                <label>Дата и время:</label>
+                <input type="datetime-local" id="editVisitDate" required>
+                <label>Заметки:</label>
+                <textarea id="editVisitNotes" placeholder="Заметки"></textarea>
+                <label>Статус:</label>
+                <select id="editVisitStatus" required>
+                    <option value="planned">Запланирован</option>
+                    <option value="completed">Завершён</option>
+                    <option value="cancelled">Отменён</option>
+                </select>
+                <!-- НОВОЕ ПОЛЕ: Выбор услуг -->
+                <label>Услуги:</label>
+                <div id="serviceIds" class="checkbox-list"></div>
+                <button type="submit">Сохранить</button>
+                <button type="button" onclick="closeEditVisitPopup()">Отмена</button>
+            </form>
+        </div>
+    </div>
+
+    <h2>Список хозяев</h2>
+    <button onclick="loadOwnersList()">Обновить список</button>
+    <ul id="ownerList"></ul>
+
+    <button onclick="logout()">Выйти</button>
+
+    <script src="script.js"></script>
+</body>
+</html>
