@@ -1,5 +1,29 @@
+// Helper to get auth token
+function getAuthToken() {
+    return localStorage.getItem('authToken');
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    const token = getAuthToken();
+    const authPrompt = document.getElementById('authPrompt');
+    const form = document.getElementById('appointmentForm');
+    if (!token) {
+        if (authPrompt) authPrompt.style.display = 'block';
+        if (form) form.style.display = 'none';
+    } else {
+        if (authPrompt) authPrompt.style.display = 'none';
+        if (form) form.style.display = '';
+    }
+});
+
 document.getElementById('appointmentForm').addEventListener('submit', async (e) => {
-  e.preventDefault();
+    e.preventDefault();
+    const token = getAuthToken();
+    if (!token) {
+        // If user isn't authenticated, redirect to login
+        window.location.href = '/login.html';
+        return;
+    }
 
   // Собираем данные из формы
   const animalData = {
@@ -24,7 +48,9 @@ document.getElementById('appointmentForm').addEventListener('submit', async (e) 
 
   try {
       // 1. Проверяем, существует ли владелец по телефону
-      const ownersResponse = await fetch(`/api/owners?phone=${ownerData.phone}`);
+            const ownersResponse = await fetch(`/api/owners?phone=${encodeURIComponent(ownerData.phone)}`, {
+                headers: { 'Authorization': 'Bearer ' + token }
+            });
       let owner;
       const owners = await ownersResponse.json();
       if (owners.length > 0) {
@@ -32,7 +58,7 @@ document.getElementById('appointmentForm').addEventListener('submit', async (e) 
       } else {
           const ownerResponse = await fetch('/api/owners', {
               method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
+              headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
               body: JSON.stringify(ownerData)
           });
           if (!ownerResponse.ok) throw new Error('Ошибка при создании владельца');
@@ -43,7 +69,7 @@ document.getElementById('appointmentForm').addEventListener('submit', async (e) 
       animalData.owner_id = owner._id;
       const animalResponse = await fetch('/api/animals', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
           body: JSON.stringify(animalData)
       });
       if (!animalResponse.ok) throw new Error('Ошибка при создании животного');
@@ -54,7 +80,7 @@ document.getElementById('appointmentForm').addEventListener('submit', async (e) 
       visitData.owner_id = owner._id;
       const visitResponse = await fetch('/api/visits', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
           body: JSON.stringify(visitData)
       });
       if (!visitResponse.ok) throw new Error('Ошибка при создании визита');

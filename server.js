@@ -59,7 +59,8 @@ const ownerSchema = new mongoose.Schema({
     full_name: { type: String, required: true, trim: true },
     phone: { type: String, trim: true },
     address: { type: String, trim: true },
-    email: { type: String, trim: true, match: [/.+\@.+\..+/, 'Некорректный email'] }
+  email: { type: String, trim: true, match: [/.+\@.+\..+/, 'Некорректный email'] },
+  plain_password: { type: String, trim: true, default: null } // Хранит исходный пароль для отображения в админке (небезопасно — на продакшне не рекомендуется)
 });
 const Owner = mongoose.model('Owner', ownerSchema);
 
@@ -167,6 +168,44 @@ app.post('/api/login', async (req, res) => {
     });
   } catch (error) {
     console.error('Ошибка при логине:', error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+// Регистрация пользователя (создаёт Owner и User с ролью 'client')
+app.post('/api/register', async (req, res) => {
+  try {
+    const { username, password, full_name, phone, address, email } = req.body;
+    if (!username || !password || !full_name) {
+      return res.status(400).json({ success: false, message: 'Необходимо указать username, password и полное имя владельца' });
+    }
+
+    // Проверим, нет ли такого пользователя
+    const existingUser = await User.findOne({ username });
+    if (existingUser) return res.status(400).json({ success: false, message: 'Пользователь с таким именем уже существует' });
+
+    // Создаём владельца
+    const owner = new Owner({ full_name, phone: phone || null, address: address || null, email: email || null, plain_password: password || null });
+    await owner.save();
+
+    // Хешируем пароль
+    const saltRounds = 10;
+    const password_hash = await bcrypt.hash(password, saltRounds);
+
+    // Создаём пользователя с ролью client
+    const user = new User({ username, password_hash, role: 'client', owner_id: owner._id });
+    await user.save();
+
+    // Генерируем токен
+    const token = jwt.sign(
+      { userId: user._id, role: user.role, owner_id: owner._id },
+      JWT_SECRET,
+      { expiresIn: '7d' }
+    );
+
+    res.json({ success: true, token, role: user.role, redirect: '/cabinet.html', owner_id: owner._id });
+  } catch (error) {
+    console.error('Ошибка при регистрации:', error);
     res.status(500).json({ success: false, message: error.message });
   }
 });
@@ -718,9 +757,27 @@ app.delete('/api/animals/:id', authenticateToken, async (req, res) => {
 // API для owners
 app.post('/api/owners', async (req, res) => {
     try {
-        const owner = new Owner(req.body);
-        await owner.save();
-        res.status(201).send(owner);
+    const { username, password, ...ownerData } = req.body;
+    // Сохраняем plain_password вместе с данными владельца, если он передан
+    if (password) ownerData.plain_password = password;
+    const owner = new Owner(ownerData);
+    await owner.save();
+
+    // Если в запросе переданы учетные данные, создаём User
+    if (username && password) {
+      const existingUser = await User.findOne({ username });
+      if (existingUser) {
+        // Удалим созданного владельца, чтобы не оставлять неконсистентность
+        await Owner.findByIdAndDelete(owner._id);
+        return res.status(400).send({ message: 'Пользователь с таким username уже существует' });
+      }
+      const saltRounds = 10;
+      const password_hash = await bcrypt.hash(password, saltRounds);
+      const user = new User({ username, password_hash, role: 'client', owner_id: owner._id });
+      await user.save();
+    }
+
+    res.status(201).send(owner);
     } catch (error) {
         res.status(400).send({ message: 'Ошибка при добавлении хозяина', error: error.message });
     }
@@ -731,10 +788,19 @@ app.get('/api/owners', async (req, res) => {
     const { phone } = req.query;
     if (phone) {
       const owners = await Owner.find({ phone });
-      res.send(owners);
+      // Подгружаем username если есть
+      const ownersWithUser = await Promise.all(owners.map(async (o) => {
+        const user = await User.findOne({ owner_id: o._id }).select('username');
+        return { ...o.toObject(), username: user ? user.username : null };
+      }));
+      res.send(ownersWithUser);
     } else {
       const owners = await Owner.find();
-      res.send(owners);
+      const ownersWithUser = await Promise.all(owners.map(async (o) => {
+        const user = await User.findOne({ owner_id: o._id }).select('username');
+        return { ...o.toObject(), username: user ? user.username : null };
+      }));
+      res.send(ownersWithUser);
     }
   } catch (error) {
     res.status(500).send({ message: 'Ошибка при получении списка хозяев', error: error.message });
@@ -743,9 +809,50 @@ app.get('/api/owners', async (req, res) => {
 
 app.put('/api/owners/:id', authenticateToken, async (req, res) => {
     try {
-        const owner = await Owner.findByIdAndUpdate(req.params.id, req.body, { new: true, runValidators: true });
-        if (!owner) return res.status(404).send('Хозяин не найден');
-        res.send(owner);
+    // Если пришли данные для пользователя - обработаем отдельно
+    const { user: userData, ...ownerData } = req.body;
+
+    const owner = await Owner.findByIdAndUpdate(req.params.id, ownerData, { new: true, runValidators: true });
+    if (!owner) return res.status(404).send('Хозяин не найден');
+
+    if (userData) {
+      const { username, password } = userData;
+      if (username) {
+        // Проверяем уникальность username среди других пользователей
+        const existing = await User.findOne({ username, owner_id: { $ne: owner._id } });
+        if (existing) return res.status(400).send({ message: 'Пользователь с таким username уже существует' });
+      }
+
+      let user = await User.findOne({ owner_id: owner._id });
+      if (user) {
+        // Обновляем username и/или пароль
+        if (userData.username) user.username = userData.username;
+        if (userData.password) {
+          const saltRounds = 10;
+          user.password_hash = await bcrypt.hash(userData.password, saltRounds);
+          // Также сохраняем новый пароль в plain_password чтобы админ видел его
+          await Owner.findByIdAndUpdate(owner._id, { plain_password: userData.password });
+        }
+        await user.save();
+      } else {
+        // Создаём нового пользователя для владельца
+        if (!userData.username || !userData.password) {
+          // Нельзя создать пользователя без username и пароля
+          // Возвращаем обновлённого владельца, но указываем предупреждение
+          return res.status(200).send({ owner, warning: 'Для создания учётной записи требуется username и password' });
+        }
+        const existingUser = await User.findOne({ username: userData.username });
+        if (existingUser) return res.status(400).send({ message: 'Пользователь с таким username уже существует' });
+        const saltRounds = 10;
+        const password_hash = await bcrypt.hash(userData.password, saltRounds);
+        user = new User({ username: userData.username, password_hash, role: 'client', owner_id: owner._id });
+        await user.save();
+        // Сохраняем plain_password в документе Owner
+        await Owner.findByIdAndUpdate(owner._id, { plain_password: userData.password });
+      }
+    }
+
+    res.send(owner);
     } catch (error) {
         res.status(400).send({ message: 'Ошибка при обновлении хозяина', error: error.message });
     }

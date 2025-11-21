@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Регистрация</title>
+  <style>
+    body { font-family: Arial, sans-serif; background:#f7f7f7; display:flex; align-items:center; justify-content:center; height:100vh; margin:0 }
+    .card { background:#fff; padding:24px; border-radius:8px; box-shadow:0 4px 12px rgba(0,0,0,0.08); width:360px }
+    h1{ margin:0 0 12px 0; font-size:20px }
+    input{ width:100%; padding:10px; margin:8px 0; box-sizing:border-box }
+    button{ width:100%; padding:10px; background:#1787ff; color:#fff; border:none; border-radius:6px; cursor:pointer }
+    a { display:inline-block; margin-top:10px; }
+    #error { color: red; min-height:18px }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>Регистрация</h1>
+    <form id="registerForm">
+      <input type="text" id="username" placeholder="Логин" required>
+      <input type="password" id="password" placeholder="Пароль" required>
+      <hr>
+      <input type="text" id="full_name" placeholder="ФИО" required>
+      <input type="tel" id="phone" placeholder="Телефон">
+      <input type="text" id="address" placeholder="Адрес">
+      <input type="email" id="email" placeholder="Email">
+      <div id="error"></div>
+      <button type="submit">Зарегистрироваться</button>
+    </form>
+    <a href="/login.html"><button type="button" style="background:#28a745; margin-top:10px">Уже есть аккаунт — Войти</button></a>
+    <a href="/"><button type="button" style="background:#6c757d; margin-top:10px">Главное меню</button></a>
+  </div>
+
+<script>
+document.getElementById('registerForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const username = document.getElementById('username').value.trim();
+  const password = document.getElementById('password').value;
+  const full_name = document.getElementById('full_name').value.trim();
+  const phone = document.getElementById('phone').value.trim() || null;
+  const address = document.getElementById('address').value.trim() || null;
+  const email = document.getElementById('email').value.trim() || null;
+
+  try {
+    const resp = await fetch('/api/register', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, password, full_name, phone, address, email })
+    });
+
+    // Try to parse JSON only if content-type indicates JSON
+    let result = null;
+    const contentType = resp.headers.get('content-type') || '';
+    if (contentType.includes('application/json')) {
+      result = await resp.json();
+    } else {
+      // Fallback: read text (could be HTML error page)
+      const text = await resp.text();
+      throw new Error(text || 'Неожиданный ответ от сервера');
+    }
+
+    if (!resp.ok) {
+      throw new Error(result.message || JSON.stringify(result) || 'Ошибка регистрации');
+    }
+
+    // Сохраняем токен, роль и owner_id
+    localStorage.setItem('authToken', result.token);
+    localStorage.setItem('role', result.role);
+    localStorage.setItem('owner_id', result.owner_id);
+    window.location.href = result.redirect || '/cabinet.html';
+  } catch (err) {
+    // Если сервер вернул HTML (например страница ошибки), покажем короткое сообщение
+    let msg = err.message || 'Ошибка';
+    if (msg.trim().startsWith('<')) {
+      msg = 'Сервер вернул ошибку (HTML). Проверьте сервер в консоли.';
+    }
+    document.getElementById('error').textContent = msg;
+    console.error('Registration error:', err);
+  }
+});
+</script>
+</body>
+</html>

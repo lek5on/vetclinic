@@ -6,11 +6,19 @@
   <link rel="stylesheet" href="client.css">
 </head>
 <body>
-    <div>
-  <h1 style="margin-right: 100px;margin-bottom: 50px;">Запись на приём в ветеринарную клинику</h1>
-  <img class="header-image"src="image1.jpeg" alt="">
-    </div>
-  <form id="appointmentForm">
+    <div class="split">
+      <div class="left">
+        <a class="main-menu" href="/">
+          <button id="mainMenuBtn" style="position:static;">Главное меню</button>
+        </a>
+        <img class="header-image" src="image1.jpeg" alt="">
+      </div>
+      <div class="right">
+        <div id="authPrompt" style="display:none; margin-bottom:16px;">
+          <p>Чтобы записаться на приём, пожалуйста, <a href="/login.html">войдите</a> или <a href="/register.html">зарегистрируйтесь</a>.</p>
+        </div>
+        <form id="appointmentForm">
+          <h1 style="margin:0 0 16px 0; text-align:left;">Запись на приём в ветеринарную клинику</h1>
     <h2>Данные животного</h2>
     <input type="text" id="animalName" placeholder="Имя животного" required>
     <input type="text" id="species" placeholder="Вид (например, Кот, Собака)" required>
@@ -26,11 +34,13 @@
     <h2>Дата и время приёма</h2>
     <input type="datetime-local" id="appointmentDate" required>
 
-    <button type="submit">Записаться</button>
-  </form>
+          <button type="submit">Записаться</button>
+        </form>
+      </div>
+    </div>
 
-  <div id="confirmation" style="display: none; margin-top: 20px;"></div>
+    <div id="confirmation" style="display: none; margin-top: 20px;"></div>
 
-  <script src="client.js"></script>
+    <script src="client.js"></script>
 </body>
 </html>

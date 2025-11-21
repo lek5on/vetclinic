@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Личный кабинет</title>
+<style>
+  body{ font-family:Arial, sans-serif; margin:20px }
+  .top { display:flex; justify-content:space-between; align-items:center }
+  .card { background:#fff; padding:16px; border-radius:6px; box-shadow:0 2px 6px rgba(0,0,0,0.06); margin-top:16px }
+  h1{ margin:0 }
+  .visit { border-bottom:1px solid #eee; padding:10px 0 }
+  .status { font-weight:600 }
+  .actions { margin-top:10px }
+  button{ padding:8px 12px; border-radius:6px; border:none; background:#1787ff; color:#fff; cursor:pointer }
+  .secondary{ background:#6c757d }
+</style>
+</head>
+<body>
+  <div class="top">
+    <h1>Личный кабинет</h1>
+    <div style="display:flex; gap:8px; align-items:center;">
+      <a href="/"><button class="secondary">Главное меню</button></a>
+      <button id="logoutBtn" class="secondary">Выйти</button>
+    </div>
+  </div>
+  <div id="welcome" class="card"></div>
+  <div id="visitsCard" class="card">
+    <h2>Мои записи</h2>
+    <div id="visitsList">Загрузка...</div>
+  </div>
+  <script>
+    // Проверка токена и загрузка визитов клиента
+    const token = localStorage.getItem('authToken');
+    const role = localStorage.getItem('role');
+    const ownerId = localStorage.getItem('owner_id');
+
+    function requireAuth() {
+      if (!token) {
+        window.location.href = '/login.html';
+        return false;
+      }
+      return true;
+    }
+
+    document.getElementById('logoutBtn').addEventListener('click', () => {
+      localStorage.removeItem('authToken');
+      localStorage.removeItem('role');
+      localStorage.removeItem('owner_id');
+      window.location.href = '/';
+    });
+
+    if (!requireAuth()) throw new Error('No auth');
+
+    // Заполним приветственный блок и добавим ссылку в админ-панель для админа
+    const welcome = document.getElementById('welcome');
+    // Покажем кнопку в админ-панель только если роль admin; больше никакого текста
+    if (role === 'admin') {
+      const actionsDiv = document.createElement('div');
+      actionsDiv.className = 'actions';
+      const a = document.createElement('a');
+      a.href = '/admin.html';
+      const btn = document.createElement('button');
+      btn.textContent = 'Админ-панель';
+      a.appendChild(btn);
+      actionsDiv.appendChild(a);
+      welcome.appendChild(actionsDiv);
+    }
+
+    async function loadMyVisits() {
+      try {
+        const resp = await fetch('/api/visits', { headers: { 'Authorization': 'Bearer ' + token } });
+        if (!resp.ok) throw new Error('Не удалось загрузить визиты');
+        const visits = await resp.json();
+        const mine = visits.filter(v => {
+          // owner_id может быть объектом или строкой
+          const oid = v.owner_id && (v.owner_id._id || v.owner_id);
+          return oid && oid.toString() === ownerId;
+        });
+        const el = document.getElementById('visitsList');
+        if (mine.length === 0) {
+          el.innerHTML = '<p>Записей не найдено</p>';
+          return;
+        }
+        el.innerHTML = '';
+        mine.forEach(v => {
+          const div = document.createElement('div');
+          div.className = 'visit';
+          const services = v.service_ids && v.service_ids.length > 0 ? v.service_ids.map(s=>s.name).join(', ') : 'Не указаны';
+
+          const dDate = document.createElement('div');
+          dDate.innerHTML = '<strong>Дата:</strong> ' + new Date(v.date).toLocaleString();
+
+          const dAnimal = document.createElement('div');
+          dAnimal.innerHTML = '<strong>Животное:</strong> ' + (v.animal_id && (v.animal_id.name || v.animal_id) ? (v.animal_id.name || v.animal_id) : 'Неизвестно');
+
+          const dServices = document.createElement('div');
+          dServices.innerHTML = '<strong>Услуги:</strong> ' + services;
+
+          const dCost = document.createElement('div');
+          dCost.innerHTML = '<strong>Стоимость:</strong> ' + (v.total_cost ? v.total_cost.toFixed(2) : '0.00') + ' руб.';
+
+          const dStatus = document.createElement('div');
+          dStatus.className = 'status';
+          dStatus.innerHTML = '<strong>Статус:</strong> ' + v.status;
+
+          const dNotes = document.createElement('div');
+          dNotes.innerHTML = '<strong>Заметки:</strong> ' + (v.notes || 'Нет');
+
+          div.appendChild(dDate);
+          div.appendChild(dAnimal);
+          div.appendChild(dServices);
+          div.appendChild(dCost);
+          div.appendChild(dStatus);
+          div.appendChild(dNotes);
+          el.appendChild(div);
+        });
+      } catch (err) {
+        document.getElementById('visitsList').textContent = err.message;
+      }
+    }
+
+    loadMyVisits();
+  </script>
+</body>
+</html>

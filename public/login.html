@@ -64,9 +64,10 @@
         <button type="submit">Войти</button>
     </form>
     <p id="error"></p>
-    <a href="/" style="margin-top: 40px; display: inline-block;">
-        <button type="button" style="background-color: #28a745;">Главное меню</button>
-    </a>
+    <div style="margin-top:12px; display:flex; gap:8px; justify-content:center;">
+      <a href="/register.html"><button type="button" style="background:#17a2b8;">Зарегистрироваться</button></a>
+      <a href="/" ><button type="button" style="background-color: #28a745;">Главное меню</button></a>
+    </div>
 
     <script>
         document.getElementById('loginForm').addEventListener('submit', async (event) => {
@@ -82,10 +83,12 @@
 
             const result = await response.json();
             if (result.success) {
-                // Сохраняем токен в localStorage
+                // Сохраняем токен, роль и owner_id в localStorage
                 localStorage.setItem('authToken', result.token);
-                // Перенаправляем
-                window.location.href = result.redirect || '/';
+                if (result.role) localStorage.setItem('role', result.role);
+                if (result.owner_id) localStorage.setItem('owner_id', result.owner_id);
+                // Всегда перенаправляем в кабинет; доступ в админ-панель только из кабинета при роли admin
+                window.location.href = '/cabinet.html';
             } else {
                 document.getElementById('error').textContent = result.message || 'Ошибка входа';
             }

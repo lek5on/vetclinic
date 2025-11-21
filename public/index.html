@@ -74,10 +74,25 @@
   <div class="content-container">
     <h1>Добро пожаловать в ветеринарную лечебницу</h1>
     <p>Выберите действие:</p>
-    <div class="nav-buttons">
-      <a href="/admin.html"><button>Управление (для сотрудников)</button></a>
-      <a href="/client.html"><button>Запись на приём (для клиентов)</button></a>
+    <div class="nav-buttons" style="flex-wrap:wrap; gap:12px;">
+      <a id="bookingBtn" href="/client.html"><button>Запись на приём</button></a>
+      <a id="loginBtn" href="/login.html"><button>Вход / Регистрация</button></a>
+      <a id="cabinetBtn" href="/cabinet.html"><button>Личный кабинет</button></a>
     </div>
+    <script>
+      // Hide login button when user is already authenticated
+      document.addEventListener('DOMContentLoaded', () => {
+        try {
+          const token = localStorage.getItem('authToken');
+          const loginBtn = document.getElementById('loginBtn');
+          if (token && loginBtn) {
+            loginBtn.style.display = 'none';
+          }
+        } catch (e) {
+          console.error('Error checking auth token:', e);
+        }
+      });
+    </script>
   </div>
 </body>
 </html>

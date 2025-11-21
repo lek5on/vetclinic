@@ -5,7 +5,7 @@ body {
     display: flex;
     justify-content: center;
     align-items: center;
-    height: 100vh;
+    min-height: 100vh;
     margin: 0;
 }
 
@@ -80,4 +80,69 @@ button:hover {
     
    
     border-radius: 10px; 
+}
+/* Layout: split screen with image on the left and form on the right */
+.split {
+    display: flex;
+    gap: 40px;
+    width: 100%;
+    max-width: 1100px;
+    padding: 24px;
+    box-sizing: border-box;
+    align-items: center;
+}
+.split .left {
+    flex: 1 1 50%;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: flex-start;
+    position: relative;
+    overflow: hidden;
+}
+.split .right {
+    flex: 1 1 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.split .left .header-image {
+    margin-top: 20px;
+    width: 100%;
+    max-width: 520px; /* уменьшили, чтобы не выходила за край */
+    height: auto;
+    object-fit: cover;
+    border-radius: 10px;
+}
+
+/* Позиционирование кнопки поверх изображения (внутри левой колонки) */
+.plit .left .main-menu {
+    position: static;
+    margin-bottom: 12px;
+    z-index: 10;
+}
+.split .left .main-menu {
+    align-self: center; /* центрируем кнопку по горизонтали внутри левой колонки */
+}
+.split .right form {
+    width: 100%;
+    max-width: 460px;
+}
+
+/* Отступ между картинкой и следующими элементами (формой) */
+.header-image {
+    margin-bottom: 24px;
+}
+
+/* Специальный стиль для кнопки 'Главное меню' на клиентской странице */
+#mainMenuBtn {
+    background: #ffffff;
+    color: #333333;
+    border: 1px solid #e0e0e0;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.12);
+    padding: 8px 12px;
+    border-radius: 6px;
+}
+#mainMenuBtn:hover {
+    background: #fafafa;
 }

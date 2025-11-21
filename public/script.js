@@ -14,6 +14,8 @@ function addAuthHeader(headers) {
     return headers;
 }
 
+// (removed password generation — admin-managed plain passwords are stored in owner.plain_password)
+
 // Проверка аутентификации при загрузке страницы
 function checkAuth() {
     const token = getAuthToken();
@@ -855,13 +857,86 @@ async function loadOwnersList() {
         list.innerHTML = '';
         owners.forEach(owner => {
             const li = document.createElement('li');
-            li.innerHTML = `${owner.full_name} (Тел: ${owner.phone || 'не указан'}, Адрес: ${owner.address || 'не указан'}, Email: ${owner.email || 'не указан'}) 
-                <button onclick="deleteOwner('${owner._id}')">Удалить</button>`;
+            const username = owner.username || '';
+
+            li.innerHTML = `
+                <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+                    <div style="flex:1; min-width:260px;">
+                        <strong>${owner.full_name}</strong><br>
+                        Тел: ${owner.phone || 'не указан'} | Адрес: ${owner.address || 'не указан'} | Email: ${owner.email || 'не указан'}
+                    </div>
+                    <div style="display:flex; gap:6px; align-items:center;">
+                        <label style="display:flex; flex-direction:column; font-size:12px;">Login
+                            <input type="text" class="owner-username" value="${username}" placeholder="Логин">
+                        </label>
+                        <label style="display:flex; flex-direction:column; font-size:12px;">Пароль
+                            <input type="text" class="owner-password" value="${owner.plain_password || ''}" placeholder="Пароль">
+                            <small style="color:#666;">Пароль сохраняется и отображается администратором.</small>
+                        </label>
+                        <button class="save-owner-btn">Сохранить</button>
+                        <button class="delete-owner-btn">Удалить</button>
+                    </div>
+                </div>
+            `;
+
+            // Attach handlers for save and delete
+            const saveBtn = li.querySelector('.save-owner-btn');
+            const deleteBtn = li.querySelector('.delete-owner-btn');
+            const usernameEl = li.querySelector('.owner-username');
+            const passwordEl = li.querySelector('.owner-password');
+
+            saveBtn.addEventListener('click', async () => {
+                const usernameInput = usernameEl.value.trim();
+                const passwordInput = passwordEl.value;
+                try {
+                    await updateOwnerCredentials(owner._id, usernameInput, passwordInput);
+                    alert('Данные хозяина сохранены');
+                    await loadOwnersList();
+                    await loadOwners();
+                } catch (err) {
+                    handleError(err, 'Ошибка при сохранении данных хозяина');
+                }
+            });
+
+            deleteBtn.addEventListener('click', () => deleteOwner(owner._id));
+
             list.appendChild(li);
         });
     } catch (error) {
         handleError(error, 'Ошибка при загрузке списка хозяев');
     }
+}
+
+// Обновление или создание учётных данных пользователя для владельца
+async function updateOwnerCredentials(ownerId, username, password) {
+    if (!checkAuth()) throw new Error('Не авторизован');
+
+    const payload = { user: {} };
+    if (username) payload.user.username = username;
+    if (password) payload.user.password = password;
+
+    if (!payload.user.username && !payload.user.password) {
+        throw new Error('Укажите логин или пароль для обновления');
+    }
+
+    const response = await fetch(`/api/owners/${ownerId}`, {
+        method: 'PUT',
+        headers: addAuthHeader({ 'Content-Type': 'application/json' }),
+        body: JSON.stringify(payload)
+    });
+
+    if (!response.ok) {
+        const text = await response.text();
+        let errMsg = `HTTP ${response.status}`;
+        try {
+            const data = JSON.parse(text);
+            errMsg = data.message || data.error || errMsg;
+        } catch (e) {
+            errMsg = text || errMsg;
+        }
+        throw new Error(errMsg);
+    }
+    return await response.json();
 }
 
 async function deleteOwner(id) {
